@@ -1,6 +1,6 @@
 # Advent of Code 2022
 
-Advent of Code is a celebration of coding mixed with the holiday spirit. In 2022 we are working towards feeding the reindeer with enough fruit to send them on their way on Christmas day.
+[Advent of Code](https://adventofcode.com/) is a celebration of coding mixed with the holiday spirit. In 2022 we are working towards feeding the reindeer with enough fruit to send them on their way on Christmas day.
 
 > Santa's reindeer typically eat regular reindeer food, but they need a lot of magical energy to deliver presents on Christmas. For that, their favorite snack is a special type of star fruit that only grows deep in the jungle. The Elves have brought you on their annual expedition to the grove where the fruit grows.
 
@@ -14,6 +14,12 @@ Commonly used imports throughout the application will make things a little easie
 
 ```python
 from functools import reduce
+```
+
+
+```python
+def readlinesext(f):
+    return list(map(lambda l: l.strip(), f))
 ```
 
 # Day 1: Calorie Counting
@@ -38,7 +44,7 @@ for line in f:
         elves.append(currentElf)
         currentElf = list()
     else:
-        currentElf.append(int(line.strip('\n')))
+        currentElf.append(int(line.strip()))
 elves.append(currentElf)
 ```
 
@@ -161,7 +167,7 @@ win_table = {
     'Scissors': 'Paper'
 }
 
-def stageHand(r):
+def stagehand(r):
     if r[1] == 'Rock':
         r[1] = win_table[r[0]]
     elif r[1] == 'Paper':
@@ -170,7 +176,7 @@ def stageHand(r):
         r[1] = lose_table[r[0]]
     return r
 
-rounds = list(map(stageHand, rounds))
+rounds = list(map(stagehand, rounds))
 ```
 
 Same as before then, we want to simply score each round with the new round setup
@@ -185,5 +191,89 @@ sum(scores)
 
 
     15442
+
+
+
+# Day 3: Rucksack Reorganization
+
+An elf messed up packing the backpacks and we need to solve it. To start with we'll take a short-code list of the items in each backpack and figure out which item is at fault in each sack and do a quick sum of the value of each of those items to try and determine how bad it really is.
+
+Alright, keeping things simple let's pull down the input list and try and parse the input.
+
+
+```python
+f = open('data/03.txt', 'r')
+def splitcompartments(l):
+    middle = int(len(l) / 2)
+    return set(l[:middle]), set(l[middle:])
+rucksacks = readlinesext(f)
+compartments = list(map(splitcompartments, rucksacks))
+```
+
+Ok, next order of business now that the shorthand list is parsed is to loop through each rucksack and find the common denominator in each sack. This is pretty easy thanks to pre-converting the sack lists to sets.
+
+
+```python
+overlaps = list(map(lambda s: list(s[0] & s[1])[0], compartments))
+```
+
+Now we have the following rules to help prioritize which items to start with:
+* Lowercase item types a through z have priorities 1 through 26.
+* Uppercase item types A through Z have priorities 27 through 52.
+
+
+```python
+orda = ord('a')
+ordA = ord('A')
+def scoreitem(i):
+    ci = ord(i)
+    if ci >= orda:
+        return ci - orda + 1
+    return ci - ordA + 27
+scores = list(map(scoreitem, overlaps))
+```
+
+Let's see, roughly, how bad of a shape we're in...
+
+
+```python
+sum(scores)
+```
+
+
+
+
+    7701
+
+
+
+Alright, now that we know this, another problem has arisen in that the elves are actually supposed to be grouped into sets of three. The elves are already in order, but they don't know what their group identity is, namely which item does every member in the group hold? To get this solved, we need to do some complex slicing.
+
+
+```python
+slices = rucksacks[::3], rucksacks[1::3], rucksacks[2::3]
+```
+
+Now that we have the groups more or less figured out, next we need to find each group's badge.
+
+
+```python
+badges = list()
+for i in range(len(slices[0])):
+    badge = list(set(slices[0][i]) & set(slices[1][i]) & set(slices[2][i]))[0]
+    badges.append(badge)
+```
+
+Now that we have the badges, scoring them really isn't any different and all we care about is the final total of the badges anyway so we'll do both real quick.
+
+
+```python
+sum(list(map(scoreitem, badges)))
+```
+
+
+
+
+    2644
 
 
