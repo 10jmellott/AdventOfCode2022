@@ -79,3 +79,111 @@ sum(calories[-3:])
     199628
 
 
+
+# Day 2: Rock Paper Scissors
+
+The elves set up camp on the beach and start playing Rock, Paper, Scissors. One elf attempts to help us cheat by providing us with an encrypted strategy guide to help us win.
+
+Read in the encrypted data files & parse it into the rounds. The first value can be A, B, or C representing rock, paper, or scissor. The second value for each round is what we should throw out, X, Y, or Z representing rock, paper, or scissors respectively as well.
+
+
+```python
+f = open('data/02.txt', 'r')
+rounds = list(map(lambda l: l.split(), f))
+```
+
+To make things easier, let's normalize the data. I don't love magic strings, but this isn't a large project so deal with it.
+
+
+```python
+normalize = {
+    'A': 'Rock', 'B': 'Paper', 'C': 'Scissors',
+    'X': 'Rock', 'Y': 'Paper', 'Z': 'Scissors'
+}
+rounds = list(map(lambda l: list(map(lambda r: normalize[r], l)), rounds))
+```
+
+Now we want to setup a function to be able to score each round. The scoring rules are fairly complex, but your score for each round is determined as 0 for losing, 3 for a draw, and 6 for a win. Additionally you gain 1, 2, or 3 points depending on whether your hand was a rock, paper, or scissors respectively.
+
+
+```python
+lose_table = {
+    'Rock': 'Paper',
+    'Paper': 'Scissors',
+    'Scissors': 'Rock'
+}
+
+score_add = { 'Rock': 1, 'Paper': 2, 'Scissors': 3 }
+
+score_lose = 0
+score_draw = 3
+score_win = 6
+
+def scoreRound(r):
+    score = score_add[r[1]]
+    if r[0] == r[1]:
+        score += score_draw
+    elif lose_table[r[1]] == r[0]:
+        score += score_lose
+    else:
+        score += score_win
+    return score
+```
+
+Next, we want to actually check each round for the score and tally them
+
+
+```python
+scores = list(map(lambda r: scoreRound(r), rounds))
+```
+
+Finally, the first part requests us to find the sum of the scores
+
+
+```python
+sum(scores)
+```
+
+
+
+
+    15422
+
+
+
+After chatting with the elf who left us to our own devices to figure this thing out, they actually told us that X means we need to lose, Y means we need to draw, and Z means we need to win. So, we need to re-normalize the data a little differently first. We know how the data was normalized the first time, so we can use the existing data without issue.
+
+
+```python
+win_table = {
+    'Rock': 'Scissors',
+    'Paper': 'Rock',
+    'Scissors': 'Paper'
+}
+
+def stageHand(r):
+    if r[1] == 'Rock':
+        r[1] = win_table[r[0]]
+    elif r[1] == 'Paper':
+        r[1] = r[0]
+    else:
+        r[1] = lose_table[r[0]]
+    return r
+
+rounds = list(map(stageHand, rounds))
+```
+
+Same as before then, we want to simply score each round with the new round setup
+
+
+```python
+scores = list(map(lambda r: scoreRound(r), rounds))
+sum(scores)
+```
+
+
+
+
+    15442
+
+
