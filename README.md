@@ -277,3 +277,75 @@ sum(list(map(scoreitem, badges)))
     2644
 
 
+
+# Day 4: Camp Cleanup
+
+The elves are disturbingly disorganized. For today's puzzle we see that the elves are trying to cleanup the campsite, but they have overlapping segments they expect to clean up. The elves are broken down into pairs but some pairs overlap completely which is silly. So, our first challenge is to figure out how many pairs are completely overlapped.
+
+
+```python
+f = open('data/04.txt', 'r')
+pairs = readlinesext(f)
+pairs = list(map(lambda p: list(map(lambda e: list(map(int, e.split('-'))), p.split(','))), pairs))
+```
+
+Now that we have the pair data parsed, we need a method for detecting when a pair is completely overlapped. As these regions are consecutive, we can pretty easily do some basic math to do boundary detection. Either the smaller of the first must be overlapped completely by the smaller of the second.
+
+
+```python
+def testsuperset(pair):
+    p1 = pair[0]
+    p2 = pair[1]
+    if p1[0] >= p2[0] and p1[1] <= p2[1]:
+        return True
+    elif p1[0] <= p2[0] and p1[1] >= p2[1]:
+        return True
+    return False
+```
+
+Nothing left but to get the number of supersets...
+
+
+```python
+len(list(filter(testsuperset, pairs)))
+```
+
+
+
+
+    456
+
+
+
+By now it's probably pretty clear that things are overlapping pretty hard, and supersets are only the worst offenders. Let's drill down and see how many pairs overlap even the smallest bit next. This is pretty simple as we've already tested the superset but basically it boils down simply checking a fixed point rather than both ends of the range for each elf. For the first case we check if the start of the range for the second elf is encapsulated within the range of the first elf, and then visa versa.
+
+
+```python
+def testoverlap(pair):
+    p1 = pair[0]
+    p2 = pair[1]
+    if p1[0] <= p2[0] and p1[1] >= p2[0]:
+        return True
+    elif p1[0] >= p2[0] and p1[0] <= p2[1]:
+        return True
+    return False
+```
+
+And, like last time, we'll get the number that pass this check.
+
+
+```python
+len(list(filter(testoverlap, pairs)))
+```
+
+
+
+
+    808
+
+
+
+
+```python
+
+```
