@@ -449,3 +449,39 @@ reduce(lambda a, b: a + b[len(b) - 1], stacks, '')
     'JNRSCDWPP'
 
 
+
+# Day 6: Tuning Trouble
+
+We're finally setting out to the star fruit grove, but the elves hand you a faulty communication system. Notably the system can't seem to figure out the start or end of the communication transfer protocol which is silly. So, we'll just do it manually. The input this time is a single line of text so we won't spend any time parsing it for now. Instead we'll just define a method to find the first set of 4 unique characters in the input field.
+
+
+```python
+f = open('data/06.txt', 'r')
+packet = readlinesext(f)[0]
+def findstart(packet, characters):
+    for i in range(characters - 1, len(packet)):
+        if len(set(packet[i - characters:i])) == characters:
+            return i
+findstart(packet, 4)
+```
+
+
+
+
+    1850
+
+
+
+Well, start of packet is 4 unique items, but a start of message is 14...so only a minor change.
+
+
+```python
+findstart(packet, 14)
+```
+
+
+
+
+    2823
+
+
