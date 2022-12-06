@@ -14,12 +14,15 @@ Commonly used imports throughout the application will make things a little easie
 
 ```python
 from functools import reduce
+import re
 ```
 
 
 ```python
 def readlinesext(f):
     return list(map(lambda l: l.strip(), f))
+def readlinesnl(f):
+    return list(map(lambda l: l.strip('\n'), f))
 ```
 
 # Day 1: Calorie Counting
@@ -345,7 +348,104 @@ len(list(filter(testoverlap, pairs)))
 
 
 
+# Day 5: Supply Stacks
+
+Today's trial leaves us to a set of shipping containers piled into stacks with instructions on how to move the containers to their final arrangement. The first order of business, as usual, is parsing the input in an easier to consume format.
+
 
 ```python
-
+f = open('data/05.txt', 'r')
+source = readlinesnl(f)
+separationindex = source.index('')
+sourcestacks = source[:separationindex-1]
+sourceinstructions = source[separationindex+1:]
 ```
+
+Now that we have the input separated into the stack and instruction segments, let's parse each part one at a time. We can start with the stacks. To make parsing this easier, we'll start by determining the number of stacks we have dictated by length of the string as there's whitespace at the end of each. Next we'll parse this segment given we know the exact placement for each character we can loop through each line and append to the stacks appropriately (starting from the bottom, it is a stack you know).
+
+
+```python
+nstacks = int((len(sourcestacks[0]) + 1) / 4)
+stacks = list(map(lambda _: list(), range(nstacks)))
+for i in range(nstacks):
+    charindex = i * 4 + 1
+    for j in range(len(sourcestacks) - 1, -1, -1):
+        character = sourcestacks[j][charindex]
+        if character != ' ':
+            stacks[i].append(sourcestacks[j][charindex])
+```
+
+Alright, we've finalized the stack organization, so next is parsing the instructions which is a pretty simple regex.
+
+
+```python
+def parseinstruction(instruction):
+    match = re.search("move (\d+) from (\d) to (\d)", instruction)
+    return int(match.group(1)), int(match.group(2)), int(match.group(3))
+instructions = list(map(parseinstruction, sourceinstructions))
+```
+
+So, finally now that we have everything parsed out, let's execute the instructions.
+
+
+```python
+def execute(stacks, instruction):
+    for i in range(instruction[0]):
+        stacks[instruction[2] - 1].append(stacks[instruction[1] - 1].pop())
+for instruction in instructions:
+    execute(stacks, instruction)
+```
+
+The only ask of this question now is what is to determine the container at the top of each stack.
+
+
+```python
+reduce(lambda a, b: a + b[len(b) - 1], stacks, '')
+```
+
+
+
+
+    'TWSGQHNHL'
+
+
+
+So, this would have been the answer if the crane moved containers like a stack, one at a time. However, it doesn't and instead actually moves items as 'whole sets'. So moving three would move the top three from the stack and keep them in place. Thankfully we have the tools, so we should be able to do this without too much trouble.
+
+ As we managed the instructions in-place, we'll re-run the stack construction real quick. The instructions, thankfully, should be the same.
+
+
+```python
+nstacks = int((len(sourcestacks[0]) + 1) / 4)
+stacks = list(map(lambda _: list(), range(nstacks)))
+for i in range(nstacks):
+    charindex = i * 4 + 1
+    for j in range(len(sourcestacks) - 1, -1, -1):
+        character = sourcestacks[j][charindex]
+        if character != ' ':
+            stacks[i].append(sourcestacks[j][charindex])
+```
+
+
+```python
+def execute(stacks, instruction):
+    popindex = len(stacks[instruction[1] - 1]) - instruction[0]
+    for i in range(instruction[0]):
+        stacks[instruction[2] - 1].append(stacks[instruction[1] - 1].pop(popindex))
+for instruction in instructions:
+    execute(stacks, instruction)
+```
+
+Finally, we just want to see the order once more of the top containers of each stack for checking purposes.
+
+
+```python
+reduce(lambda a, b: a + b[len(b) - 1], stacks, '')
+```
+
+
+
+
+    'JNRSCDWPP'
+
+
