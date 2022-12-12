@@ -485,3 +485,98 @@ findstart(packet, 14)
     2823
 
 
+
+# Day 7: No Space Left On Device
+
+You try to run an update on your broken comms system, and find that it doesn't have enough space. Your input is a Linux-style command queue that indicates files and directories. So, the first thing we need to do is build out the file tree. A file tree will just make this a little easier to understand.
+
+
+```python
+class FileInfo:
+    def __init__(self, name, size):
+        self.name = name
+        self.size = size
+
+class DirectoryInfo:
+    def __init__(self, name, root):
+        self.name = name
+        self.root = root
+        self.files = []
+        self.directories = []
+        self._size = None
+    def filesize(self):
+        if self._size:
+            return self._size
+        filesizes = sum(map(lambda f: f.size, self.files))
+        dirsizes = sum(map(lambda d: d.filesize(), self.directories))
+        self._size = filesizes + dirsizes
+        return self._size
+    def changedirectory(self, target):
+        if target == '..':
+            return self.root
+        for d in self.directories:
+            if d.name == target:
+                return d
+        newdir = DirectoryInfo(target, self)
+        self.directories.append(newdir)
+        return newdir
+```
+
+
+```python
+f = open('data/07.txt', 'r')
+terminal = readlinesext(f)
+pwd = DirectoryInfo('/', None)
+for line in terminal[1:]:
+    match = re.search('\$ cd (.+)', line)
+    if match:
+        target = match.group(1)
+        pwd = pwd.changedirectory(target)
+    match = re.search('^(\d+) (.+)$', line)
+    if match:
+        f = FileInfo(match.group(2), int(match.group(1)))
+        pwd.files.append(f)
+```
+
+
+```python
+def recursivescan(d):
+    total = d.filesize()
+    if d.filesize() > 100000:
+        total = 0
+    for subdir in d.directories:
+        total += recursivescan(subdir)
+    return total
+while pwd.root:
+    pwd = pwd.root
+recursivescan(pwd)
+```
+
+
+
+
+    1644735
+
+
+
+Cool, now we have a rough idea of the giant directories in the system and how to traverse the system. Next, to get the update we need `30000000` (units) and the total system has `70000000` (units). To keep it simpler, this means we can have a maximum of `40000000` (units) on the system. We'd like to delete the 'smallest' possible directory to get the required space. So, once more we'll loop through and keep our finger on the best candidate while we go through the folders.
+
+
+```python
+maximumsize = 40000000
+targetdifference = pwd.filesize() - maximumsize
+def recursivescan2(d, smallest):
+    if d.filesize() > targetdifference and d.filesize() < smallest.filesize():
+        smallest = d
+    for subdir in d.directories:
+        smallest = recursivescan2(subdir, smallest)
+    return smallest
+recursivescan2(pwd, pwd).filesize()
+```
+
+
+
+
+    1300850
+
+
