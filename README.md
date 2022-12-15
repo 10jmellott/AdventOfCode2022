@@ -19,6 +19,7 @@ import re
 
 
 ```python
+# File Extensions
 def readlinesext(f):
     return list(map(lambda l: l.strip(), f))
 def readlinesnl(f):
@@ -580,3 +581,104 @@ recursivescan2(pwd, pwd).filesize()
     1300850
 
 
+
+# Day 8: Treetop Tree House
+
+We're considering building tree houses in the forest with some newly grown trees. We have a height map of the forest in the section we're considering but we first want to determine which trees are visible from the outskirts of our forest cross-section to plan where to build the tree house.
+
+
+```python
+f = open('data/08.txt', 'r')
+rawlines = readlinesext(f)
+heightmap = list(map(lambda line: list(map(lambda tree: int(tree), line)), rawlines))
+rows = len(heightmap)
+columns = len(heightmap[0])
+
+def getheight(pos):
+    return heightmap[pos[1]][pos[0]]
+```
+
+Now that we have the heightmap parsed, the next thing to do is determine which trees are 'visible'. A tree is considered visible if, in at least one direction up, down, left, or right, all trees in that direction are strictly smaller than the tree you're evaluating. If we broke this problem down, line by line, it could get exponentially slower as we attempt this so, instead, we'll just keep a running tab of the trees and go through each direction until we hit our highest tree in each direction (row & column).
+
+
+```python
+def checkvisibility(pos, delta):
+    treeset = set()
+    tree = -1
+    highesttree = -1
+    while pos[0] >= 0 and pos[1] >= 0 and pos[0] < columns and pos[1] < rows:
+        tree = getheight(pos)
+        if tree > highesttree:
+            highesttree = tree
+            treeset.add(pos)
+        pos = pos[0] + delta[0], pos[1] + delta[1]
+    return treeset
+```
+
+
+```python
+visibletrees = set()
+for x in range(0, columns):
+    visibleup = checkvisibility((x, 0), (0, 1))
+    visibledown = checkvisibility((x, rows - 1), (0, -1))
+    visibletrees = visibletrees.union(visibleup).union(visibledown)
+for y in range(0, rows):
+    visibleright = checkvisibility((0, y), (1, 0))
+    visibleleft = checkvisibility((columns - 1, y), (-1, 0))
+    visibletrees = visibletrees.union(visibleright).union(visibleleft)
+len(visibletrees)
+```
+
+
+
+
+    1690
+
+
+
+A decent number of trees have a pretty good view, but certainly a small subset. However, the elves take a slightly different stance and want to know which tree has the best view of other trees. This, unfortunately, could be a 'local minimum' where, even if it's not visible from the outside it still has a great view. Also unfortunately, what we've done above so far to calculate quickly has, more or less, backfired so we're going to have to subdivide the problem anew.
+
+A tree's 'scenic' score is calculated by the number of trees it can view before running into a tree that blocks the view in all four directions, multiplied together. We're going to pretend like the forest is in a valley and the trees on the outskirts are mountainous and, thus, 0 trees can be viewed from that direction and their scenic score will ultimately be 0.
+
+
+```python
+def checkvisiblityscore(pos, delta):
+    vis = 0
+    tree = getheight(pos)
+    pos = pos[0] + delta[0], pos[1] + delta[1]
+    while pos[0] >= 0 and pos[1] >= 0 and pos[0] < columns and pos[1] < rows:
+        vis += 1
+        if getheight(pos) >= tree:
+            break
+        pos = pos[0] + delta[0], pos[1] + delta[1]
+    return vis
+    
+def scenicscore(pos):
+    up = checkvisiblityscore(pos, (0, -1))
+    down = checkvisiblityscore(pos, (0, 1))
+    right = checkvisiblityscore(pos, (1, 0))
+    left = checkvisiblityscore(pos, (-1, 0))
+    return up * down * right * left
+
+scenicmax = 0
+# Short-circuiting calculating the perimeter of the
+#   forest as the scenic score for these is always 0
+for y in range(1, rows - 1):
+    for x in range(1, columns - 1):
+        treescore = scenicscore((x, y))
+        if scenicmax < treescore:
+            scenicmax = treescore
+scenicmax
+```
+
+
+
+
+    535680
+
+
+
+
+```python
+
+```
